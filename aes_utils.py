@@ -21,7 +21,7 @@ def encrypt_message(msg, aes_key, hmac_key):
         f.write(cipher.nonce)
         f.write(ciphertext)
     
-    return (tag, cipher.nonce, ciphertext) # maybe concatenate these?
+    return tag + cipher.nonce + ciphertext # maybe concatenate these?
 
 def decrypt_message(full_ciphertext, aes_key, hmac_key):
     
@@ -46,7 +46,7 @@ if __name__=="__main__":
     hmac_key = make_key()
     
     enc = encrypt_message("hello", aes_key, hmac_key)
-    dec = decrypt_message(enc[0]+ enc[1] + enc[2], aes_key, hmac_key)
+    dec = decrypt_message(enc, aes_key, hmac_key)
     
     print("Encrypt returned:", enc)
     print("Decrypt returned:", dec)
