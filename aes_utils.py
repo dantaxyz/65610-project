@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
-from bitstring import BitArray
+# from bitstring import BitArray
 
 def make_key():
     return get_random_bytes(16)
@@ -26,11 +26,13 @@ def encrypt_message(msg, aes_key, hmac_key):
         f.write(ciphertext)
     
     enc =  tag + cipher.nonce + ciphertext
-    return BitArray(enc).bin # return as bit string
+    return enc
+    # return BitArray(enc).bin # return as bit string
 
 def decrypt_message(full_ciphertext, aes_key, hmac_key):
     
-    converted_ct = BitArray(bin=full_ciphertext).bytes
+    # converted_ct = BitArray(bin=full_ciphertext).bytes
+    converted_ct = full_ciphertext
 
     tag = converted_ct[:32]
     nonce = converted_ct[32:40]
