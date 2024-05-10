@@ -25,7 +25,7 @@ def ll_enc(msg_string, aes_key, orig_lsb):
     msg_bytes = msg_string.encode("utf-8")
 
     num_locs = len(orig_lsb) // NODE_LENGTH
-    locs, locs_set = [0], set(0)
+    locs, locs_set = [0], set([0])
     locs_needed = (len(msg_bytes) + BLOCK_LENGTH - 1) // BLOCK_LENGTH + 1
     while len(locs) < locs_needed:
         loc = secrets.randbelow(num_locs)
@@ -41,24 +41,25 @@ def ll_enc(msg_string, aes_key, orig_lsb):
     encrypted_data = encrypt_bytes(to_encrypt, aes_key)
 
     encrypted_arr = np.frombuffer(encrypted_data, dtype=np.uint8)
-    modified_lsb_arr = np.frombuffer(orig_lsb, dtype=np.uint8)
-    for i, loc in zip(locs):
+    modified_lsb_arr = np.frombuffer(orig_lsb, dtype=np.uint8).copy()
+    for i, loc in enumerate(locs[:-1]):
         modified_lsb_arr[loc*NODE_LENGTH : loc*NODE_LENGTH + NODE_LENGTH] = encrypted_arr[i*NODE_LENGTH : i*NODE_LENGTH + NODE_LENGTH]
+    modified_lsb_arr[locs[-1]*NODE_LENGTH : locs[-1]*NODE_LENGTH + len(encrypted_arr) - (len(locs) - 1)*NODE_LENGTH] = encrypted_arr[(len(locs) - 1)*NODE_LENGTH :]
     
     return modified_lsb_arr.tobytes()
 
-def ll_enc(ct_bytes, aes_key):
+def ll_dec(ct_bytes, aes_key):
     nonce = ct_bytes[:NONCE_LENGTH]
     decrypter = get_decrypter(aes_key, nonce)
-    encrypted_len = decrypter.decrypt(ct_bytes[NONCE_LENGTH:BLOCK_LENGTH-NONCE_LENGTH])
+    encrypted_len = int.from_bytes(decrypter.decrypt(ct_bytes[NONCE_LENGTH:BLOCK_LENGTH]))
     
     msg_bytes = b""
     last_loc = 0
     while len(msg_bytes) < encrypted_len:
         next_loc_bytes = decrypter.decrypt(ct_bytes[last_loc*NODE_LENGTH + BLOCK_LENGTH : last_loc*NODE_LENGTH + NODE_LENGTH])
         next_loc = int.from_bytes(next_loc_bytes)
-        encrypted_len -= BLOCK_LENGTH - NODE_LENGTH
+        encrypted_len -= NODE_LENGTH - BLOCK_LENGTH
         msg_bytes += decrypter.decrypt(ct_bytes[next_loc*NODE_LENGTH : next_loc*NODE_LENGTH + BLOCK_LENGTH])
         last_loc = next_loc
     
-    return msg_bytes.decode("utf-8")
+    return msg_bytes[:encrypted_len].decode("utf-8")

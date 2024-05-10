@@ -9,8 +9,9 @@ def read_wav(filename):
 
 def modify_lsb(audio, message):
     message_bits = np.unpackbits(np.array([x for x in message]).astype("uint8"))
-    if len(message_bits) > len(audio):
+    if len(message_bits) > len(audio) + 7:
         raise Exception("audio file not large enough")
+    message_bits = message_bits[:len(audio)]
     return np.concatenate([[(int(x) & ~1) | b for x, b in zip(audio, message_bits)], audio[len(message):]]).astype(audio.dtype)
 
 def read_lsb(audio):
