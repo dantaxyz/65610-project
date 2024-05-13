@@ -12,7 +12,7 @@ def modify_lsb(audio, message):
     if len(message_bits) > len(audio) + 7:
         raise Exception("audio file not large enough")
     message_bits = message_bits[:len(audio)]
-    return np.concatenate([[(int(x) & ~1) | b for x, b in zip(audio, message_bits)], audio[len(message):]]).astype(audio.dtype)
+    return np.concatenate([[(int(x) & ~1) | b for x, b in zip(audio, message_bits)], audio[len(message_bits):]]).astype(audio.dtype)
 
 def read_lsb(audio):
     message_bits = [int(x) & 1 for x in audio]
